@@ -80,6 +80,9 @@ body {
 /* VIEWS */
 .view { display: none; padding: 20px; }
 .view.active { display: block; }
+#view-timer { padding: 0; }
+#view-timer.active { display: flex; flex-direction: column; min-height: calc(100vh - 60px); }
+.view.active { display: block; }
 
 /* SECTION TITLES */
 .section-title {
@@ -396,6 +399,167 @@ body {
 .choose-card:active { transform: scale(.97); }
 .choose-card-day { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 0.05em; margin-bottom: 3px; }
 .choose-card-type { font-size: 11px; color: var(--text2); }
+
+/* ============================
+   TIMER / STOPWATCH VIEW
+   ============================ */
+/* Sub-tabs */
+.clk-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 20px; background: var(--bg); flex-shrink: 0;
+}
+.clk-tab {
+  flex: 1; padding: 14px 0; background: none; border: none;
+  font-size: 13px; font-weight: 500; color: var(--text3);
+  cursor: pointer; position: relative; transition: color .2s;
+  letter-spacing: 0.03em;
+}
+.clk-tab.active { color: var(--accent); }
+.clk-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 20%; right: 20%;
+  height: 2px; background: var(--accent); border-radius: 2px;
+}
+
+/* Panel */
+.clk-panel { display: none; flex-direction: column; flex: 1; padding: 0 24px 20px; }
+.clk-panel.active { display: flex; }
+
+/* Ring + display */
+.clk-ring-wrap {
+  position: relative; margin: 20px auto 28px;
+  width: 260px; height: 260px; flex-shrink: 0;
+}
+.clk-ring-svg {
+  position: absolute; inset: 0; transform: rotate(-90deg);
+  width: 100%; height: 100%;
+}
+.clk-ring-bg { fill: none; stroke: var(--surface3); stroke-width: 5; }
+.clk-ring-fg {
+  fill: none; stroke: var(--accent); stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .1s linear;
+}
+.clk-ring-fg.paused { stroke: var(--warn); }
+.clk-ring-fg.alert  { stroke: var(--danger); }
+.clk-display {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.clk-time {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 58px; letter-spacing: 0.04em;
+  color: var(--text); line-height: 1; font-feature-settings: "tnum";
+}
+.clk-time-sub { font-size: 16px; color: var(--text2); margin-top: 4px; letter-spacing: 0.06em; }
+.clk-lap-count { font-size: 12px; color: var(--text3); margin-top: 6px; letter-spacing: 0.05em; }
+
+/* Circular buttons — iPhone style */
+.clk-btns {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 14px; margin-bottom: 28px; flex-shrink: 0;
+}
+.clk-btn {
+  width: 78px; height: 78px; border-radius: 50%; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: transform .12s, opacity .12s;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; -webkit-tap-highlight-color: transparent;
+}
+.clk-btn:active { transform: scale(.93); opacity: .85; }
+.clk-btn-gray  { background: #2c2c2e; color: #fff; }
+.clk-btn-green { background: #1c4a00; color: var(--accent); border: 1.5px solid rgba(200,255,0,0.3); }
+.clk-btn-green.running { background: #3a1000; color: #ff6b35; border-color: rgba(255,107,53,0.3); }
+.clk-btn-green.paused  { background: #1c4a00; color: var(--accent); border-color: rgba(200,255,0,0.3); }
+.clk-btn span { font-size: 13px; font-weight: 600; }
+/* Inner ring on buttons */
+.clk-btn::before {
+  content: ''; position: absolute; inset: 4px;
+  border-radius: 50%; border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* LAPS */
+.clk-laps { flex: 1; overflow-y: auto; }
+.clk-lap-header {
+  display: flex; justify-content: space-between;
+  padding: 6px 4px; border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase;
+  font-weight: 500; margin-bottom: 4px;
+}
+.clk-lap-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 4px; border-bottom: 1px solid var(--border);
+}
+.clk-lap-row:last-child { border-bottom: none; }
+.clk-lap-num { font-size: 14px; font-weight: 500; color: var(--text2); }
+.clk-lap-time { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.05em; color: var(--text); }
+.clk-lap-row.fastest .clk-lap-time { color: var(--accent); }
+.clk-lap-row.slowest .clk-lap-time { color: var(--danger); }
+.clk-lap-row.current .clk-lap-time { color: var(--text2); }
+
+/* TIMER PICKER — iOS-style scroll wheel */
+.tmr-picker-wrap {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; height: 220px; position: relative; overflow: hidden;
+  margin: 28px 0;
+}
+/* gradient masks top/bottom */
+.tmr-picker-wrap::before, .tmr-picker-wrap::after {
+  content: ''; position: absolute; left: 0; right: 0; z-index: 2;
+  height: 80px; pointer-events: none;
+}
+.tmr-picker-wrap::before { top: 0; background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%); }
+.tmr-picker-wrap::after  { bottom: 0; background: linear-gradient(to top, var(--bg) 0%, transparent 100%); }
+/* Center selection line */
+.tmr-picker-highlight {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  height: 44px; background: var(--surface2); border-radius: 10px;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  pointer-events: none; z-index: 1;
+}
+.tmr-col {
+  flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory;
+  scrollbar-width: none; -ms-overflow-style: none;
+  height: 220px; position: relative; z-index: 3;
+}
+.tmr-col::-webkit-scrollbar { display: none; }
+.tmr-col-item {
+  height: 44px; display: flex; align-items: center; justify-content: center;
+  scroll-snap-align: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 36px;
+  letter-spacing: 0.04em; color: var(--text2);
+  cursor: pointer; transition: color .1s;
+}
+/* padding top/bottom so first/last items can center */
+.tmr-col::before, .tmr-col::after {
+  content: ''; display: block; height: 88px;
+}
+.tmr-col-label {
+  width: 32px; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--text3); font-weight: 500; z-index: 3;
+}
+
+/* Timer countdown display */
+.tmr-countdown-wrap {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.tmr-countdown {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 72px; letter-spacing: 0.04em; color: var(--text);
+  line-height: 1; text-align: center;
+}
+.tmr-countdown.alerting { color: var(--danger); animation: tmr-pulse 1s infinite; }
+@keyframes tmr-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+.tmr-subtitle { font-size: 13px; color: var(--text3); margin-top: 8px; letter-spacing: 0.06em; }
+
+/* Alert overlay */
+.tmr-done-banner {
+  display: none; background: var(--danger);
+  color: #fff; text-align: center; padding: 12px;
+  font-size: 14px; font-weight: 600; letter-spacing: 0.05em;
+  border-radius: var(--r-sm); margin-bottom: 12px;
+  animation: tmr-pulse 0.8s infinite;
+}
+.tmr-done-banner.show { display: block; }
 </style>
 </head>
 <body>
@@ -423,19 +587,105 @@ body {
   <div id="history-content"></div>
 </div>
 
+<!-- TIMER / STOPWATCH VIEW -->
+<div class="view" id="view-timer">
+
+  <!-- Sub-tabs -->
+  <div class="clk-tabs">
+    <button class="clk-tab active" id="tab-stopwatch" onclick="switchClockTab('stopwatch')">Секундомер</button>
+    <button class="clk-tab" id="tab-timer" onclick="switchClockTab('timer')">Таймер</button>
+  </div>
+
+  <!-- ====== STOPWATCH PANEL ====== -->
+  <div class="clk-panel active" id="panel-stopwatch">
+    <div class="clk-ring-wrap">
+      <svg class="clk-ring-svg" viewBox="0 0 260 260">
+        <circle class="clk-ring-bg" cx="130" cy="130" r="122"/>
+        <circle class="clk-ring-fg" id="sw-ring" cx="130" cy="130" r="122"
+          stroke-dasharray="766.5" stroke-dashoffset="766.5"/>
+      </svg>
+      <div class="clk-display">
+        <div class="clk-time" id="sw-display">00:00<span style="font-size:30px;color:var(--text2)">.00</span></div>
+        <div class="clk-lap-count" id="sw-lap-info"></div>
+      </div>
+    </div>
+
+    <div class="clk-btns">
+      <button class="clk-btn clk-btn-gray" id="sw-left-btn" onclick="swLeftAction()">
+        <span id="sw-left-label">Сброс</span>
+      </button>
+      <button class="clk-btn clk-btn-green" id="sw-right-btn" onclick="swRightAction()">
+        <span id="sw-right-label">Старт</span>
+      </button>
+    </div>
+
+    <div class="clk-laps" id="sw-laps-wrap" style="display:none">
+      <div class="clk-lap-header"><span>Круг</span><span>Время круга</span><span>Всего</span></div>
+      <div id="sw-laps-list"></div>
+    </div>
+  </div>
+
+  <!-- ====== TIMER PANEL ====== -->
+  <div class="clk-panel" id="panel-timer">
+    <div class="tmr-done-banner" id="tmr-done">⏰ ВРЕМЯ ВЫШЛО!</div>
+
+    <!-- Picker (shown when stopped) -->
+    <div id="tmr-picker-section">
+      <div class="tmr-picker-wrap" id="tmr-picker-wrap">
+        <div class="tmr-picker-highlight"></div>
+        <div class="tmr-col" id="tmr-col-h" onscroll="onPickerScroll('h')"></div>
+        <div class="tmr-col-label">ч</div>
+        <div class="tmr-col" id="tmr-col-m" onscroll="onPickerScroll('m')"></div>
+        <div class="tmr-col-label">мин</div>
+        <div class="tmr-col" id="tmr-col-s" onscroll="onPickerScroll('s')"></div>
+        <div class="tmr-col-label">сек</div>
+      </div>
+    </div>
+
+    <!-- Countdown (shown when running/paused) -->
+    <div class="tmr-countdown-wrap" id="tmr-countdown-section" style="display:none">
+      <div class="clk-ring-wrap">
+        <svg class="clk-ring-svg" viewBox="0 0 260 260">
+          <circle class="clk-ring-bg" cx="130" cy="130" r="122"/>
+          <circle class="clk-ring-fg" id="tmr-ring" cx="130" cy="130" r="122"
+            stroke-dasharray="766.5" stroke-dashoffset="0"/>
+        </svg>
+        <div class="clk-display">
+          <div class="tmr-countdown" id="tmr-display">00:00</div>
+          <div class="tmr-subtitle" id="tmr-subtitle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="clk-btns">
+      <button class="clk-btn clk-btn-gray" id="tmr-left-btn" onclick="tmrLeftAction()">
+        <span id="tmr-left-label">Отмена</span>
+      </button>
+      <button class="clk-btn clk-btn-green" id="tmr-right-btn" onclick="tmrRightAction()">
+        <span id="tmr-right-label">Старт</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="nav">
   <button class="nav-btn active" onclick="switchView('today')" id="nav-today">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3 12L12 3L21 12V20C21 20.5523 20.5523 21 20 21H15V16H9V21H4C3.44772 21 3 20.5523 3 20V12Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12L12 3L21 12V20C21 20.5523 20.5523 21 20 21H15V16H9V21H4C3.44772 21 3 20.5523 3 20V12Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="nav-label">Сегодня</span>
   </button>
   <button class="nav-btn" onclick="switchView('schedule')" id="nav-schedule">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="18" rx="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 2V6M8 2V6M3 10H21" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 2V6M8 2V6M3 10H21" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="nav-label">Расписание</span>
   </button>
   <button class="nav-btn" onclick="switchView('history')" id="nav-history">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7V12L15 15" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7V12L15 15" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="nav-label">История</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('timer')" id="nav-timer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v4l2.5 2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 2.5h5M12 2.5V5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="nav-label">Таймер</span>
   </button>
 </nav>
 
@@ -590,9 +840,14 @@ let currentView = 'today';
 
 function switchView(v) {
   currentView = v;
-  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(el => {
+    el.classList.remove('active');
+    el.style.display = 'none';
+  });
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('view-' + v).classList.add('active');
+  const target = document.getElementById('view-' + v);
+  target.classList.add('active');
+  target.style.display = v === 'timer' ? 'flex' : 'block';
   document.getElementById('nav-' + v).classList.add('active');
   if (v === 'today') renderToday();
   if (v === 'schedule') renderSchedule();
@@ -1035,6 +1290,254 @@ document.getElementById('topbar-date').innerHTML = `
 `;
 
 if (activeSession) startTimer();
+
+// ============================================================
+// TIMER & STOPWATCH
+// ============================================================
+
+function switchClockTab(tab) {
+  document.querySelectorAll('.clk-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.clk-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// ---------- STOPWATCH ----------
+let swRunning = false;
+let swStartTime = 0;
+let swElapsed = 0;
+let swInterval_id = null;
+let swLaps = [];
+let swLapStart = 0;
+const SW_CIRC = 766.5;
+
+function swFmt(ms, big) {
+  const totalCs = Math.floor(ms / 10);
+  const cs = totalCs % 100;
+  const totalS = Math.floor(ms / 1000);
+  const s = totalS % 60, m = Math.floor(totalS / 60) % 60, h = Math.floor(totalS / 3600);
+  const ms2 = `<span style="font-size:${big?'30':'14'}px;color:var(--text2)">.${String(cs).padStart(2,'0')}</span>`;
+  if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}${ms2}`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}${ms2}`;
+}
+function swFmtPlain(ms) {
+  const cs = Math.floor(ms / 10) % 100;
+  const totalS = Math.floor(ms / 1000);
+  const s = totalS % 60, m = Math.floor(totalS / 60) % 60, h = Math.floor(totalS / 3600);
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`;
+}
+function swGetEl() { return swRunning ? swElapsed + (Date.now() - swStartTime) : swElapsed; }
+
+function swTick() {
+  const el = swGetEl();
+  document.getElementById('sw-display').innerHTML = swFmt(el, true);
+  const prog = (el % 60000) / 60000;
+  document.getElementById('sw-ring').style.strokeDashoffset = SW_CIRC * (1 - prog);
+  if (swLaps.length > 0) {
+    const lapEl = el - swLapStart;
+    document.getElementById('sw-lap-info').textContent = `Круг ${swLaps.length + 1}: ${swFmtPlain(lapEl)}`;
+  }
+}
+
+function swRightAction() {
+  if (!swRunning) {
+    swRunning = true; swStartTime = Date.now();
+    swInterval_id = setInterval(swTick, 30);
+    document.getElementById('sw-right-btn').classList.add('running');
+    document.getElementById('sw-right-label').textContent = 'Стоп';
+    document.getElementById('sw-left-label').textContent = 'Круг';
+    document.getElementById('sw-ring').classList.remove('paused');
+  } else {
+    swElapsed = swGetEl(); swRunning = false;
+    clearInterval(swInterval_id);
+    document.getElementById('sw-ring').classList.add('paused');
+    document.getElementById('sw-right-btn').classList.remove('running');
+    document.getElementById('sw-right-label').textContent = 'Старт';
+    document.getElementById('sw-left-label').textContent = 'Сброс';
+  }
+}
+
+function swLeftAction() {
+  if (swRunning) {
+    const el = swGetEl();
+    const lapMs = el - swLapStart;
+    swLaps.unshift({ lapMs, totalMs: el, num: swLaps.length + 1 });
+    swLapStart = el;
+    swRenderLaps();
+    document.getElementById('sw-laps-wrap').style.display = 'block';
+    document.getElementById('sw-lap-info').textContent = `Круг ${swLaps.length + 1}: 00:00.00`;
+  } else {
+    swElapsed = 0; swRunning = false; swLaps = []; swLapStart = 0;
+    clearInterval(swInterval_id);
+    document.getElementById('sw-display').innerHTML = `00:00<span style="font-size:30px;color:var(--text2)">.00</span>`;
+    document.getElementById('sw-ring').style.strokeDashoffset = SW_CIRC;
+    document.getElementById('sw-ring').classList.remove('paused');
+    document.getElementById('sw-right-btn').classList.remove('running');
+    document.getElementById('sw-right-label').textContent = 'Старт';
+    document.getElementById('sw-left-label').textContent = 'Сброс';
+    document.getElementById('sw-laps-wrap').style.display = 'none';
+    document.getElementById('sw-laps-list').innerHTML = '';
+    document.getElementById('sw-lap-info').textContent = '';
+  }
+}
+
+function swRenderLaps() {
+  if (!swLaps.length) return;
+  const times = swLaps.slice(swRunning ? 1 : 0).map(l => l.lapMs);
+  const fastest = times.length ? Math.min(...times) : -1;
+  const slowest = times.length > 1 ? Math.max(...times) : -1;
+  document.getElementById('sw-laps-list').innerHTML = swLaps.map((l, i) => {
+    let cls = '';
+    if (i === 0 && swRunning) cls = 'current';
+    else if (l.lapMs === fastest && fastest !== -1) cls = 'fastest';
+    else if (l.lapMs === slowest && slowest !== -1) cls = 'slowest';
+    return `<div class="clk-lap-row ${cls}">
+      <span class="clk-lap-num">Круг ${l.num}</span>
+      <span class="clk-lap-time">${swFmtPlain(l.lapMs)}</span>
+      <span style="font-size:13px;color:var(--text3)">${swFmtPlain(l.totalMs)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ---------- TIMER ----------
+let tmrRunning = false;
+let tmrPaused = false;
+let tmrTotalMs = 0;
+let tmrRemaining = 0;
+let tmrStartAt = 0;
+let tmrInterval_id = null;
+let tmrDone = false;
+let pickerH = 0, pickerM = 1, pickerS = 30;
+const TMR_CIRC = 766.5;
+
+function buildPickerCol(id, maxVal, initial) {
+  const col = document.getElementById('tmr-col-' + id);
+  if (!col) return;
+  col.innerHTML = '';
+  for (let i = 0; i <= maxVal; i++) {
+    const div = document.createElement('div');
+    div.className = 'tmr-col-item';
+    div.textContent = String(i).padStart(2, '0');
+    col.appendChild(div);
+  }
+  requestAnimationFrame(() => { col.scrollTop = initial * 44; });
+}
+
+function onPickerScroll(id) {
+  const col = document.getElementById('tmr-col-' + id);
+  clearTimeout(col._snap);
+  col._snap = setTimeout(() => {
+    const idx = Math.round(col.scrollTop / 44);
+    col.scrollTop = idx * 44;
+    if (id === 'h') pickerH = idx;
+    else if (id === 'm') pickerM = idx;
+    else pickerS = idx;
+    updateTmrBtn();
+  }, 80);
+}
+
+function updateTmrBtn() {
+  const total = pickerH * 3600 + pickerM * 60 + pickerS;
+  const btn = document.getElementById('tmr-right-btn');
+  if (btn) { btn.style.opacity = total > 0 ? '1' : '0.4'; btn.disabled = total === 0; }
+}
+
+function tmrFmt(ms) {
+  const s = Math.ceil(ms / 1000);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function tmrRightAction() {
+  if (tmrDone) { tmrReset(); return; }
+  if (!tmrRunning && !tmrPaused) {
+    tmrTotalMs = (pickerH * 3600 + pickerM * 60 + pickerS) * 1000;
+    if (!tmrTotalMs) return;
+    tmrRemaining = tmrTotalMs; tmrStartAt = Date.now();
+    tmrRunning = true; tmrPaused = false;
+    showTmrCd();
+    clearInterval(tmrInterval_id);
+    tmrInterval_id = setInterval(tmrTick, 100);
+    document.getElementById('tmr-right-label').textContent = 'Пауза';
+    document.getElementById('tmr-right-btn').classList.add('running');
+    document.getElementById('tmr-left-label').textContent = 'Отмена';
+  } else if (tmrRunning) {
+    tmrRemaining = Math.max(0, tmrRemaining - (Date.now() - tmrStartAt));
+    tmrRunning = false; tmrPaused = true;
+    clearInterval(tmrInterval_id);
+    document.getElementById('tmr-ring').classList.add('paused');
+    document.getElementById('tmr-right-btn').classList.remove('running');
+    document.getElementById('tmr-right-label').textContent = 'Продолжить';
+  } else if (tmrPaused) {
+    tmrStartAt = Date.now(); tmrRunning = true; tmrPaused = false;
+    clearInterval(tmrInterval_id);
+    tmrInterval_id = setInterval(tmrTick, 100);
+    document.getElementById('tmr-ring').classList.remove('paused');
+    document.getElementById('tmr-right-btn').classList.add('running');
+    document.getElementById('tmr-right-label').textContent = 'Пауза';
+  }
+}
+
+function tmrLeftAction() { tmrReset(); }
+
+function tmrTick() {
+  const elapsed = Date.now() - tmrStartAt;
+  const rem = Math.max(0, tmrRemaining - elapsed);
+  const disp = document.getElementById('tmr-display');
+  if (disp) disp.textContent = tmrFmt(rem);
+  const ring = document.getElementById('tmr-ring');
+  if (ring) ring.style.strokeDashoffset = TMR_CIRC * (1 - rem / tmrTotalMs);
+  if (rem <= 0) {
+    clearInterval(tmrInterval_id);
+    tmrRunning = false; tmrDone = true;
+    if (disp) { disp.textContent = '00:00'; disp.classList.add('alerting'); }
+    if (ring) { ring.style.strokeDashoffset = TMR_CIRC; ring.classList.add('alert'); }
+    const done = document.getElementById('tmr-done');
+    if (done) done.classList.add('show');
+    document.getElementById('tmr-right-label').textContent = 'Готово';
+    document.getElementById('tmr-right-btn').classList.remove('running');
+    if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+    showToast('⏰ Время вышло!');
+  }
+}
+
+function showTmrCd() {
+  document.getElementById('tmr-picker-section').style.display = 'none';
+  document.getElementById('tmr-countdown-section').style.display = '';
+  document.getElementById('tmr-display').textContent = tmrFmt(tmrRemaining);
+  const ring = document.getElementById('tmr-ring');
+  ring.classList.remove('paused','alert');
+  ring.style.strokeDashoffset = '0';
+}
+
+function tmrReset() {
+  clearInterval(tmrInterval_id);
+  tmrRunning = false; tmrPaused = false; tmrDone = false;
+  tmrRemaining = 0; tmrTotalMs = 0;
+  document.getElementById('tmr-picker-section').style.display = '';
+  document.getElementById('tmr-countdown-section').style.display = 'none';
+  const done = document.getElementById('tmr-done');
+  if (done) done.classList.remove('show');
+  const disp = document.getElementById('tmr-display');
+  if (disp) disp.classList.remove('alerting');
+  const ring = document.getElementById('tmr-ring');
+  if (ring) { ring.classList.remove('paused','alert'); ring.style.strokeDashoffset = '0'; }
+  document.getElementById('tmr-right-btn').classList.remove('running');
+  document.getElementById('tmr-right-label').textContent = 'Старт';
+  document.getElementById('tmr-left-label').textContent = 'Отмена';
+  document.getElementById('tmr-right-btn').style.cssText = '';
+  updateTmrBtn();
+}
+
+// Init pickers after DOM is ready
+setTimeout(() => {
+  buildPickerCol('h', 23, pickerH);
+  buildPickerCol('m', 59, pickerM);
+  buildPickerCol('s', 59, pickerS);
+  updateTmrBtn();
+}, 300);
 </script>
 </body>
 </html>
