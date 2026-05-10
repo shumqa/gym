@@ -23,7 +23,63 @@
   --warn: #ffa040;
   --r: 12px;
   --r-sm: 8px;
+  /* clock btn bg */
+  --btn-gray-bg: #2c2c2e;
+  --btn-gray-clr: #e0e0e0;
+  --btn-green-bg: #1c3d00;
+  --btn-run-bg: #3a1000;
+  --btn-run-clr: #ff6b35;
+  --hero-gradient: radial-gradient(circle, rgba(200,255,0,0.08) 0%, transparent 70%);
 }
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface2: #f2f2f7;
+  --surface3: #e5e5ea;
+  --border: #d1d1d6;
+  --accent: #4a7c00;
+  --accent-dim: rgba(74,124,0,0.12);
+  --accent-dim2: rgba(74,124,0,0.06);
+  --text: #1c1c1e;
+  --text2: #636366;
+  --text3: #aeaeb2;
+  --danger: #d0302a;
+  --success: #4a7c00;
+  --warn: #c27400;
+  --btn-gray-bg: #e5e5ea;
+  --btn-gray-clr: #1c1c1e;
+  --btn-green-bg: #d4edaa;
+  --btn-run-bg: #ffe0cc;
+  --btn-run-clr: #c25000;
+  --hero-gradient: radial-gradient(circle, rgba(74,124,0,0.07) 0%, transparent 70%);
+}
+[data-theme="light"] .topbar { background: var(--bg); border-bottom-color: var(--border); }
+[data-theme="light"] .clk-ring-bg { stroke: var(--surface3); }
+[data-theme="light"] .hist-icon.push  { background: rgba(147,92,231,0.12); }
+[data-theme="light"] .hist-icon.pull  { background: rgba(56,189,148,0.12); }
+[data-theme="light"] .hist-icon.legs  { background: rgba(255,107,107,0.12); }
+[data-theme="light"] .hist-icon.cardio{ background: rgba(255,160,64,0.12); }
+[data-theme="light"] .pill-push { background: rgba(147,92,231,0.10); }
+[data-theme="light"] .pill-pull { background: rgba(56,189,148,0.10); }
+[data-theme="light"] .pill-legs { background: rgba(255,107,107,0.10); }
+[data-theme="light"] .pill-cardio{ background: rgba(255,160,64,0.10); }
+[data-theme="light"] .muscle-tag.primary { background: rgba(74,124,0,0.12); color: var(--accent); }
+[data-theme="light"] .vid-modal-overlay { background: rgba(0,0,0,0.6); }
+[data-theme="light"] .vid-info-sheet { background: var(--surface); }
+
+/* theme toggle button */
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text2); transition: all .2s;
+  flex-shrink: 0;
+}
+.theme-toggle:active { transform: scale(.9); }
+.theme-toggle svg { width: 18px; height: 18px; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
 body {
@@ -82,7 +138,6 @@ body {
 .view.active { display: block; }
 #view-timer { padding: 0; }
 #view-timer.active { display: flex; flex-direction: column; min-height: calc(100vh - 60px); }
-.view.active { display: block; }
 
 /* SECTION TITLES */
 .section-title {
@@ -106,7 +161,7 @@ body {
   content: '';
   position: absolute; top: -30px; right: -30px;
   width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(200,255,0,0.08) 0%, transparent 70%);
+  background: var(--hero-gradient);
   pointer-events: none;
 }
 .date-line { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
@@ -466,10 +521,10 @@ body {
   position: relative; -webkit-tap-highlight-color: transparent;
 }
 .clk-btn:active { transform: scale(.93); opacity: .85; }
-.clk-btn-gray  { background: #2c2c2e; color: #fff; }
-.clk-btn-green { background: #1c4a00; color: var(--accent); border: 1.5px solid rgba(200,255,0,0.3); }
-.clk-btn-green.running { background: #3a1000; color: #ff6b35; border-color: rgba(255,107,53,0.3); }
-.clk-btn-green.paused  { background: #1c4a00; color: var(--accent); border-color: rgba(200,255,0,0.3); }
+.clk-btn-gray  { background: var(--btn-gray-bg); color: var(--btn-gray-clr); }
+.clk-btn-green { background: var(--btn-green-bg); color: var(--accent); border: 1.5px solid var(--accent-dim); }
+.clk-btn-green.running { background: var(--btn-run-bg); color: var(--btn-run-clr); border-color: rgba(255,107,53,0.3); }
+.clk-btn-green.paused  { background: var(--btn-green-bg); color: var(--accent); border-color: var(--accent-dim); }
 .clk-btn span { font-size: 13px; font-weight: 600; }
 /* Inner ring on buttons */
 .clk-btn::before {
@@ -569,7 +624,22 @@ body {
     <div class="topbar-sub">Твой личный</div>
     <div class="topbar-title">GYM LOG</div>
   </div>
-  <div id="topbar-date" style="text-align:right; font-size:12px; color:var(--text2); line-height:1.5;"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+      <!-- moon = dark mode active -->
+      <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <!-- sun = light mode active -->
+      <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+    <div id="topbar-date" style="text-align:right; font-size:12px; color:var(--text2); line-height:1.5;"></div>
+  </div>
 </div>
 
 <!-- TODAY VIEW -->
@@ -797,10 +867,50 @@ const WORKOUT_DATA = {
       { id: 'wk5', name: 'Подъём ног в висе на перекладине', sets: '3 × 12–15 повт', primary: ['Нижняя прямая мышца живота'], secondary: ['Подвздошно-поясничная мышца', 'Кор'], note: 'Можно сгибать ноги. Не раскачивайтесь.' },
       { id: 'wk6', name: 'Пешая ходьба или плавание', sets: '30–40 мин (LISS)', primary: ['Сердечно-сосудистая система'], secondary: ['Активное восстановление'], note: 'Низкоинтенсивное кардио. Сжигает жир и ускоряет восстановление.' }
     ]
+  },
+
+  // ─── ВТОРНИК ────────────────────────────────────────────────
+  // После Push (пн) — грудь/плечи/трицепс восстанавливаются.
+  // Ноги и спина свежие → упор на нижнее тело (изоляция, легко)
+  // + кор + кардио. Не мешает ни понедельнику, ни среде.
+  tue: {
+    id: 'tue', day: 'Вторник', short: 'Вт', type: 'Core + Нижнее тело',
+    label: 'Ягодицы · Кор · Кардио',
+    pillClass: 'pill-legs', iconClass: 'legs', iconText: 'CORE',
+    exercises: [
+      { id:'tue1', name:'Кардио — велотренажёр умеренный темп', sets:'20–25 мин', primary:['Сердечно-сосудистая система'], secondary:['Квадрицепс','Ягодицы'], note:'Умеренный темп, частота пульса 120–135 уд/мин. Разминка + активное сжигание жира без стресса для суставов.' },
+      { id:'tue2', name:'Ягодичный мостик со штангой (Hip Thrust)', sets:'4 × 12–15 повт', primary:['Большая ягодичная мышца'], secondary:['Бицепс бедра','Нижняя спина'], note:'Главное упражнение для ягодиц. Штанга на бёдрах через мягкую подложку. Сожмите ягодицы в верхней точке и задержитесь на 1 сек.' },
+      { id:'tue3', name:'Разгибание ног в тренажёре', sets:'3 × 15–20 повт', primary:['Квадрицепс (все 4 головки)'], secondary:[], note:'Изолирует квадрицепс без нагрузки на спину. Полная амплитуда, медленно вниз. После тяжёлого понедельника — отличный способ добавить объём без перегрузки.' },
+      { id:'tue4', name:'Сгибание ног в тренажёре сидя', sets:'3 × 15 повт', primary:['Бицепс бедра (обе головки)'], secondary:['Икры'], note:'Сидячий вариант — лучше растягивает бицепс бедра чем лёжа. Полная амплитуда, без рывков.' },
+      { id:'tue5', name:'Гиперэкстензия в тренажёре', sets:'3 × 15 повт', primary:['Нижняя спина (разгибатели)','Ягодицы'], secondary:['Бицепс бедра'], note:'Укрепляет поясницу и ягодицы одновременно. Не переразгибайтесь — в верхней точке тело прямое, не выгнутое дугой.' },
+      { id:'tue6', name:'Скручивания на верхнем блоке стоя на коленях', sets:'3 × 15–20 повт', primary:['Прямая мышца живота (верх)'], secondary:['Косые мышцы'], note:'Лучшее упражнение для пресса с отягощением. Тяните лбом к коленям — именно сгибание позвоночника, а не наклон корпуса.' },
+      { id:'tue7', name:'Подъём ног лёжа на горизонтальной скамье', sets:'3 × 15 повт', primary:['Нижняя прямая мышца живота'], secondary:['Подвздошно-поясничная мышца'], note:'Медленно опускайте ноги — эксцентрик создаёт нагрузку. Поясница прижата к скамье на протяжении всего движения.' },
+      { id:'tue8', name:'Боковая планка с касанием', sets:'3 × 12 повт / сторону', primary:['Косые мышцы живота'], secondary:['Ягодицы','Поперечная мышца'], note:'В боковой планке поднимаете свободную руку и тянетесь вверх. Прорабатывает косые мышцы лучше статической планки.' }
+    ]
+  },
+
+  // ─── ЧЕТВЕРГ ────────────────────────────────────────────────
+  // После Pull (ср) — спина/бицепс восстанавливаются.
+  // Грудь свежая (3 дня с пн). День перед ногами (пт) → без ног.
+  // Идеально: руки + плечи — изоляция даёт рост без конкуренции.
+  thu: {
+    id: 'thu', day: 'Четверг', short: 'Чт', type: 'Руки + Плечи',
+    label: 'Бицепс · Трицепс · Дельты',
+    pillClass: 'pill-push', iconClass: 'push', iconText: 'ARMS',
+    exercises: [
+      { id:'thu1', name:'Подъём штанги EZ на бицепс стоя', sets:'4 × 10–12 повт', primary:['Бицепс (длинная и короткая головки)'], secondary:['Брахиалис'], note:'Изгиб грифа снимает нагрузку с запястий. Строгая техника: локти у туловища, без читинга. Медленно опускайте.' },
+      { id:'thu2', name:'Концентрированный подъём на бицепс', sets:'3 × 12 повт', primary:['Короткая головка бицепса'], secondary:['Брахиалис'], note:'Максимальная изоляция. Локоть упирается во внутреннюю поверхность бедра. Пик сокращения — задержка вверху на 1 сек.' },
+      { id:'thu3', name:'Разгибания на трицепс с верёвкой на блоке', sets:'4 × 12–15 повт', primary:['Трицепс (латеральная и медиальная головка)'], secondary:[], note:'Верёвка позволяет в нижней точке развести руки и сильнее растянуть трицепс. Локти прижаты к телу, не двигаются.' },
+      { id:'thu4', name:'Французский жим с гантелями лёжа', sets:'3 × 10–12 повт', primary:['Длинная головка трицепса'], secondary:['Медиальная головка трицепса'], note:'Гантели дают независимое движение каждой рукой — снижает нагрузку на запястья. Опускайте за голову для большей амплитуды.' },
+      { id:'thu5', name:'Жим Арнольда', sets:'3 × 12 повт', primary:['Передняя и средняя дельта'], secondary:['Трицепс','Верхняя трапеция'], note:'Пронация/супинация задействует все три пучка дельты. Начните ладонями к себе — разверните в процессе жима. Полная амплитуда.' },
+      { id:'thu6', name:'Тяга штанги к подбородку широким хватом', sets:'3 × 12 повт', primary:['Средняя дельта','Верхняя трапеция'], secondary:['Передняя дельта','Бицепс'], note:'Широкий хват (шире плеч) → больше нагрузки на дельты, меньше на трапецию. Локти ведите вверх и в стороны.' },
+      { id:'thu7', name:'Обратные разведения на тренажёре (Pec Deck обратная)', sets:'3 × 15 повт', primary:['Задняя дельта'], secondary:['Ромбовидные','Надостная мышца'], note:'Машина даёт постоянное напряжение на протяжении всей амплитуды. Альтернатива: разведения гантелей в наклоне.' },
+      { id:'thu8', name:'HIIT-финиш на велотренажёре', sets:'15 мин (30 сек / 90 сек)', primary:['Кардио-система','Жиросжигание'], secondary:['Квадрицепс','Ягодицы'], note:'Завершающий жиросжигающий блок. 6–8 раундов. Разгон пульса после изолирующей тренировки даёт дополнительный жировой расход.' }
+    ]
   }
 };
 
-const DAY_TO_WORKOUT = { 1: 'mon', 3: 'wed', 5: 'fri', 0: 'wknd', 6: 'wknd' };
+const DAY_TO_WORKOUT = { 1:'mon', 2:'tue', 3:'wed', 4:'thu', 5:'fri', 0:'wknd', 6:'wknd' };
 const DAY_NAMES = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 const MONTH_NAMES = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
@@ -1145,29 +1255,36 @@ function confirmFinish() {
 
 function renderSchedule() {
   const c = document.getElementById('schedule-content');
-  const workouts = Object.values(WORKOUT_DATA);
+  const dow = new Date().getDay();
 
   const days = [
-    { label: 'Понедельник', wid: 'mon', today: new Date().getDay() === 1 },
-    { label: 'Среда', wid: 'wed', today: new Date().getDay() === 3 },
-    { label: 'Пятница', wid: 'fri', today: new Date().getDay() === 5 },
-    { label: 'Выходной (опционально)', wid: 'wknd', today: [0,6].includes(new Date().getDay()) }
+    { label: 'Понедельник', wid: 'mon',  today: dow === 1, optional: false },
+    { label: 'Вторник',     wid: 'tue',  today: dow === 2, optional: false },
+    { label: 'Среда',       wid: 'wed',  today: dow === 3, optional: false },
+    { label: 'Четверг',     wid: 'thu',  today: dow === 4, optional: false },
+    { label: 'Пятница',     wid: 'fri',  today: dow === 5, optional: false },
+    { label: 'Выходной',    wid: 'wknd', today: dow === 0 || dow === 6, optional: true },
   ];
 
-  c.innerHTML = `
-    <div class="section-title">Программа тренировок</div>
+  c.innerHTML = `<div class="section-title">Программа тренировок</div>
     ${days.map(d => {
       const w = WORKOUT_DATA[d.wid];
       const exRows = w.exercises.map(ex => `
         <div class="sched-ex">
           <span class="sched-ex-name">${ex.name}</span>
           <span class="sched-ex-sets">${ex.sets.split(' ')[0]}</span>
+          <button class="sched-ex-vid" onclick="openVidModal('${ex.id}')" title="Как делать">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
         </div>`).join('');
       return `
         <div class="schedule-card">
           <div class="schedule-header" onclick="toggleSchedule('sc-${d.wid}', this)">
             <div>
-              <span class="weekday-tag ${d.today ? 'today' : ''}">${d.today ? '📍 ' : ''}${d.label}</span>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                <span class="weekday-tag ${d.today ? 'today' : ''}">${d.today ? '📍 ' : ''}${d.label}</span>
+                ${d.optional ? '<span style="font-size:10px;color:var(--text3);font-weight:500">по настроению</span>' : ''}
+              </div>
               <div class="schedule-day"><span class="day-pill ${w.pillClass}">${w.type}</span></div>
               <div class="schedule-type">${w.label} · ${w.exercises.length} упр</div>
             </div>
@@ -1182,8 +1299,7 @@ function renderSchedule() {
             </div>
           </div>
         </div>`;
-    }).join('')}
-  `;
+    }).join('')}`;
 }
 
 function toggleSchedule(id, header) {
@@ -1408,7 +1524,7 @@ let tmrRemaining = 0;
 let tmrStartAt = 0;
 let tmrInterval_id = null;
 let tmrDone = false;
-let pickerH = 0, pickerM = 1, pickerS = 30;
+let pickerH = 0, pickerM = 0, pickerS = 0;
 const TMR_CIRC = 766.5;
 
 function buildPickerCol(id, maxVal, initial) {
@@ -1443,11 +1559,22 @@ function updateTmrBtn() {
   if (btn) { btn.style.opacity = total > 0 ? '1' : '0.4'; btn.disabled = total === 0; }
 }
 
+// ─── TIMER FORMAT FIX ───────────────────────────────────────────
+// Bug was: Math.ceil(totalMs/1000) overflows into the next minute
+// e.g. Math.ceil(59500/1000)=60 → decomposed as 1min 0sec (wrong!)
+// Fix: floor hours & minutes independently, ceil only remaining seconds
+// within the current minute, capped at 59 to prevent overflow.
 function tmrFmt(ms) {
-  const s = Math.ceil(ms / 1000);
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-  if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  if (ms <= 0) return '00:00';
+  const pad = n => String(n).padStart(2, '0');
+  const h = Math.floor(ms / 3600000);
+  const remH = ms % 3600000;
+  const m = Math.floor(remH / 60000);
+  const remM = remH % 60000;
+  // ceil seconds within this minute, but cap at 59 so we never roll over
+  const s = Math.min(59, Math.ceil(remM / 1000));
+  if (h > 0) return pad(h) + ':' + pad(m) + ':' + pad(s);
+  return pad(m) + ':' + pad(s);
 }
 
 function tmrRightAction() {
@@ -1538,6 +1665,38 @@ setTimeout(() => {
   buildPickerCol('s', 59, pickerS);
   updateTmrBtn();
 }, 300);
+
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  applyTheme(next);
+  localStorage.setItem('gym_theme', next);
+}
+
+function applyTheme(theme) {
+  const html = document.documentElement;
+  const moon = document.getElementById('icon-moon');
+  const sun  = document.getElementById('icon-sun');
+  if (theme === 'light') {
+    html.setAttribute('data-theme', 'light');
+    if (moon) moon.style.display = 'none';
+    if (sun)  sun.style.display  = '';
+  } else {
+    html.removeAttribute('data-theme');
+    if (moon) moon.style.display = '';
+    if (sun)  sun.style.display  = 'none';
+  }
+}
+
+// Apply saved theme on load (before first render)
+(function() {
+  const saved = localStorage.getItem('gym_theme') || 'dark';
+  applyTheme(saved);
+})();
 </script>
 </body>
 </html>
