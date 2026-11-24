@@ -1,5 +1,7 @@
 import { readJSON, writeJSON } from '../core/storage.js';
 import { calculateBodyMetrics } from '../core/metrics.js';
+import { addBodyWeightEntry, localTodayISO } from '../core/training-log.js';
+import { initProgress, renderProgressSection } from './progress.js';
 
 const PROFILE_KEY = 'gym_profile_v1';
 const RECORDS_KEY = 'gym_achievements_v1';
@@ -175,6 +177,7 @@ export function renderProfile() {
         <div id="bmi-output">${renderMetricCard(profile)}</div>
       </section>
     </div>
+    ${renderProgressSection()}
     <section class="profile-panel achievements-panel">
       <div class="achievements-header">
         <div class="panel-heading"><div><div class="panel-eyebrow">ПРОГРЕСС В ЗАЛЕ</div><h2>Достижения</h2><p class="panel-description">История максимальных весов по упражнениям и тренажёрам.</p></div><span class="panel-mark">03</span></div>
@@ -218,8 +221,10 @@ function saveProfile(event) {
     return;
   }
 
+  const previousProfile = loadProfile();
   const saved = writeJSON(PROFILE_KEY, { ...values, name, updatedAt: new Date().toISOString() });
   if (saved) {
+    if (Number(previousProfile.weightKg) !== Number(values.weightKg)) addBodyWeightEntry(values.weightKg, localTodayISO());
     renderProfile();
     showMessage('Параметры профиля сохранены');
   } else {
@@ -304,6 +309,7 @@ export function initProfile() {
   root = document.getElementById('profile-content');
   if (!root || root.dataset.initialized === 'true') return;
   root.dataset.initialized = 'true';
+  initProgress(root, () => renderProfile());
   root.addEventListener('submit', event => {
     if (event.target.id === 'profile-form') saveProfile(event);
     if (event.target.id === 'achievement-form') saveRecord(event);

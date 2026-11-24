@@ -1,5 +1,7 @@
 import { WORKOUT_DATA, DAY_TO_WORKOUT, DAY_NAMES, MONTH_NAMES } from '../data/workouts.js';
 import { readJSON, writeJSON, removeKey } from '../core/storage.js';
+import { clearSessionSets } from '../core/training-log.js';
+import { renderSetLogger } from './set-log.js';
 
 // ============================================================
 // STATE
@@ -12,6 +14,9 @@ export function loadSession() {
   activeSession = readJSON('gym_session', null);
   if (activeSession && activeSession.checked) {
     activeSession.checked = new Set(activeSession.checked);
+    // Backward compatibility for sessions created before the set journal existed.
+    activeSession.sessionId ||= String(activeSession.started || Date.now());
+    saveSession();
   }
 }
 
@@ -55,7 +60,7 @@ export function renderToday() {
 
     let exHtml = w.exercises.map(ex => {
       const isDone = activeSession.checked.has(ex.id);
-      return exerciseCard(ex, isDone, true);
+      return exerciseCard(ex, isDone, true, activeSession.sessionId, activeSession.workoutId);
     }).join('');
 
     c.innerHTML = `
@@ -136,7 +141,7 @@ export function renderToday() {
   }
 }
 
-function exerciseCard(ex, isDone, interactive) {
+function exerciseCard(ex, isDone, interactive, sessionId = '', workoutId = '') {
   const doneClass = isDone ? 'done' : '';
   const onclick = interactive ? `onclick="toggleExercise('${ex.id}')"` : '';
   const expandId = `detail-${ex.id}`;
@@ -162,6 +167,7 @@ function exerciseCard(ex, isDone, interactive) {
         </div>
       </div>
       <div class="ex-detail" id="${expandId}">${ex.note}</div>
+      ${interactive ? renderSetLogger(ex, sessionId, workoutId) : ''}
     </div>
   `;
 }
@@ -218,9 +224,11 @@ function toggleExercise(exId) {
 }
 
 function startSession(workoutId) {
+  const started = Date.now();
   activeSession = {
     workoutId,
-    started: Date.now(),
+    started,
+    sessionId: String(started),
     checked: new Set()
   };
   saveSession();
@@ -228,7 +236,8 @@ function startSession(workoutId) {
 }
 
 function cancelSession() {
-  if (!confirm('Отменить тренировку? Прогресс не сохранится.')) return;
+  if (!confirm('Отменить тренировку? Прогресс и записанные подходы этой тренировки будут удалены.')) return;
+  clearSessionSets(activeSession?.sessionId);
   activeSession = null;
   saveSession();
   stopTimer();
