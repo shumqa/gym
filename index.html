@@ -13,6 +13,9 @@
   <link rel="stylesheet" href="./css/layout.css">
   <link rel="stylesheet" href="./css/components.css">
   <link rel="stylesheet" href="./css/profile.css">
+  <link rel="stylesheet" href="./css/training-log.css">
+  <link rel="stylesheet" href="./css/progress.css">
+  <link rel="stylesheet" href="./css/catalog.css">
   <link rel="stylesheet" href="./css/responsive.css">
 </head>
 <body>
@@ -45,6 +48,10 @@
 
     <section class="view" id="view-history" aria-label="История тренировок">
       <div id="history-content"></div>
+    </section>
+
+    <section class="view" id="view-catalog" aria-label="Каталог упражнений">
+      <div id="catalog-content"></div>
     </section>
 
     <section class="view" id="view-timer" aria-label="Таймер и секундомер">
@@ -102,6 +109,9 @@
     </button>
     <button class="nav-btn" type="button" onclick="switchView('history')" id="nav-history" aria-label="История">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7V12L15 15"/></svg><span class="nav-label">История</span>
+    </button>
+    <button class="nav-btn" type="button" onclick="switchView('catalog')" id="nav-catalog" aria-label="Каталог упражнений">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 1 4 17.5z" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 6h8M8 9h8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-label">Каталог</span>
     </button>
     <button class="nav-btn" type="button" onclick="switchView('timer')" id="nav-timer" aria-label="Таймер">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5M12 2.5V5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-label">Таймер</span>

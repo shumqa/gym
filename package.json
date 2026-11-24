@@ -1,7 +1,14 @@
 {
   "name": "gym-log",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
-  "description": "Responsive workout log with profile metrics and personal records"
+  "description": "Workout diary with set logging, progress charts, exercise library and profile",
+  "scripts": {
+    "build:standalone": "node scripts/build-standalone.cjs",
+    "serve": "python -m http.server 8080"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
 }
