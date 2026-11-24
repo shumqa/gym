@@ -1,9 +1,11 @@
 import { loadSession, renderToday, renderSchedule, renderHistory, showToast } from './features/training.js';
 import { initProfile, renderProfile } from './features/profile.js';
+import { initSetLog } from './features/set-log.js';
+import { initCatalog, renderCatalog } from './features/catalog.js';
 import { initTheme, toggleTheme } from './features/theme.js';
 import './features/clock.js';
 
-const VIEWS = new Set(['today', 'schedule', 'history', 'timer', 'profile']);
+const VIEWS = new Set(['today', 'schedule', 'history', 'catalog', 'timer', 'profile']);
 let currentView = 'today';
 
 export function switchView(view) {
@@ -25,6 +27,7 @@ export function switchView(view) {
   if (view === 'today') renderToday();
   if (view === 'schedule') renderSchedule();
   if (view === 'history') renderHistory();
+  if (view === 'catalog') renderCatalog();
   if (view === 'profile') renderProfile();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -44,6 +47,8 @@ function initApp() {
   initTheme();
   loadSession();
   initProfile();
+  initSetLog(document.getElementById('today-content'));
+  initCatalog();
   updateHeaderDate();
   renderToday();
   if (document.getElementById('view-today')) {
