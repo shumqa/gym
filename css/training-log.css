@@ -1,0 +1,30 @@
+/* Set-by-set workout journal */
+.set-log { margin:0 14px 14px 52px; border-top:1px solid var(--border); }
+.set-log > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 0 8px; color:var(--text2); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; list-style:none; }
+.set-log > summary::-webkit-details-marker { display:none; }
+.set-log > summary::after { content:'＋'; color:var(--accent); font-size:15px; }
+.set-log[open] > summary::after { content:'−'; }
+.set-count { margin-left:auto; color:var(--accent); font-size:10px; letter-spacing:0; text-transform:none; }
+.set-log-content { padding:4px 0 12px; }
+.set-previous { margin:0 0 9px; color:var(--text3); font-size:10px; }
+.set-previous strong { color:var(--text2); font-weight:600; }
+.set-table-wrap { width:100%; overflow-x:auto; margin:0 0 10px; }
+.set-table { width:100%; border-collapse:collapse; font-size:11px; white-space:nowrap; }
+.set-table th { padding:7px 6px; color:var(--text3); font-size:9px; font-weight:600; text-align:left; text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid var(--border); }
+.set-table td { padding:8px 6px; border-bottom:1px solid var(--border); color:var(--text2); }
+.set-table td:nth-child(2) { color:var(--accent); font-weight:700; }
+.set-delete { width:23px; height:23px; border:1px solid var(--border); border-radius:6px; color:var(--text3); background:transparent; cursor:pointer; font-size:16px; line-height:1; }
+.set-delete:hover { border-color:var(--danger); color:var(--danger); }
+.set-empty { margin:0 0 10px; color:var(--text3); font-size:10px; line-height:1.5; }
+.set-log-form { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)) auto; gap:7px; align-items:end; }
+.set-log-form label { min-width:0; display:flex; flex-direction:column; gap:5px; }
+.set-log-form label span { color:var(--text3); font-size:9px; font-weight:600; }
+.set-log-form input, .set-log-form select { min-width:0; width:100%; height:36px; padding:7px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); color:var(--text); font:12px 'DM Sans',sans-serif; }
+.set-log-form input:focus, .set-log-form select:focus { outline:1px solid var(--accent); border-color:var(--accent); }
+.set-add-btn { width:auto; min-height:36px; padding:7px 11px; font:12px 'DM Sans',sans-serif; letter-spacing:0; white-space:nowrap; }
+.set-help { margin-top:8px; color:var(--text3); font-size:9px; line-height:1.5; }
+@media (max-width:600px) {
+  .set-log { margin-left:14px; }
+  .set-log-form { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .set-add-btn { width:100%; grid-column:1/-1; }
+}
