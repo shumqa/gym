@@ -1,0 +1,7 @@
+{
+  "name": "gym-log",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Responsive workout log with profile metrics and personal records"
+}
