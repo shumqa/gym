@@ -1,4 +1,4 @@
-import { loadSession, renderToday, renderSchedule, renderHistory, showToast } from './features/training.js';
+import { loadSession, renderToday, renderSchedule, showToast } from './features/training.js';
 import { initProfile, renderProfile } from './features/profile.js';
 import { initSetLog } from './features/set-log.js';
 import { initCatalog, renderCatalog } from './features/catalog.js';
@@ -6,7 +6,7 @@ import { initProgressPage, renderProgressPage } from './features/progress.js';
 import { initTheme, toggleTheme } from './features/theme.js';
 import './features/clock.js';
 
-const VIEWS = new Set(['today', 'schedule', 'history', 'catalog', 'progress', 'timer', 'profile']);
+const VIEWS = new Set(['today', 'schedule', 'catalog', 'progress', 'timer', 'profile']);
 let currentView = 'today';
 
 export function switchView(view) {
@@ -32,7 +32,6 @@ export function switchView(view) {
 
   if (view === 'today') renderToday();
   if (view === 'schedule') renderSchedule();
-  if (view === 'history') renderHistory();
   if (view === 'catalog') renderCatalog();
   if (view === 'progress') renderProgressPage();
   if (view === 'profile') renderProfile();
