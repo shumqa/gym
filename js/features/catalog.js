@@ -1,4 +1,6 @@
 import { getExerciseLibrary, EXERCISE_CATEGORIES } from '../data/exercise-library.js';
+import { getActiveSessionContext } from './training.js';
+import { renderSetLogger, initSetLog } from './set-log.js';
 
 const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -23,6 +25,7 @@ function renderCards() {
     return;
   }
 
+  const session = getActiveSessionContext();
   target.innerHTML = list.map(item => `
     <article class="catalog-card">
       <div class="catalog-card-top"><span class="catalog-category">${escapeHTML(item.categoryLabel)}</span><span class="catalog-equipment">${escapeHTML(item.equipment)}</span></div>
@@ -34,6 +37,7 @@ function renderCards() {
         <a href="${escapeHTML(item.videoUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(item.videoLabel)} ↗</a>
       </div>
       <div class="catalog-source">Источник: ${escapeHTML(item.guideSource)}</div>
+      ${session ? `<div class="catalog-extra-log">${renderSetLogger(item, session.sessionId, session.workoutId)}</div>` : ''}
     </article>
   `).join('');
   const count = root.querySelector('#catalog-count');
@@ -44,7 +48,7 @@ export function renderCatalog() {
   if (!root) return;
   cachedExercises = getExerciseLibrary();
   root.innerHTML = `
-    <div class="catalog-heading"><div><div class="section-eyebrow">БИБЛИОТЕКА ДВИЖЕНИЙ</div><h1 class="profile-title">Каталог упражнений</h1><p class="profile-subtitle">Упражнения из твоего расписания, мышцы, оборудование и внешние материалы по технике.</p></div><div class="catalog-total">${cachedExercises.length}<span>упражнений</span></div></div>
+    <div class="catalog-heading"><div><div class="section-eyebrow">БИБЛИОТЕКА ДВИЖЕНИЙ</div><h1 class="profile-title">Каталог упражнений</h1><p class="profile-subtitle">Базовые и популярные движения для силовых тренировок. Во время активной сессии подходы можно записывать прямо здесь.</p></div><div class="catalog-total">${cachedExercises.length}<span>упражнений</span></div></div>
     <section class="catalog-toolbar">
       <label class="catalog-search"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" autocomplete="off" placeholder="Найти упражнение, мышцу или оборудование" value="${escapeHTML(searchTerm)}"></label>
       <label class="catalog-filter-label" for="catalog-category">Группа мышц</label>
@@ -68,5 +72,6 @@ export function renderCatalog() {
 export function initCatalog() {
   root = document.getElementById('catalog-content');
   if (!root) return;
+  initSetLog(root);
   renderCatalog();
 }

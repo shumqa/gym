@@ -7,6 +7,7 @@ import {
   localTodayISO
 } from '../core/training-log.js';
 import { getExerciseLibrary } from '../data/exercise-library.js';
+import { initAchievements, renderAchievementsSection } from './achievements.js';
 
 const PROFILE_KEY = 'gym_profile_v1';
 const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -77,7 +78,7 @@ export function renderProgressSection() {
   const loggedExercises = loggedIds.map(id => library.find(item => item.id === id)).filter(Boolean);
   const selectedId = loggedExercises[0]?.id || '';
   return `<section class="progress-section">
-    <div class="progress-section-heading"><div><div class="panel-eyebrow">АНАЛИТИКА</div><h2>Динамика прогресса</h2><p class="panel-description">История веса тела и рабочих весов из журнала подходов.</p></div><span class="panel-mark">04</span></div>
+    <div class="progress-section-heading"><div><div class="panel-eyebrow">ТРЕНИРОВОЧНАЯ АНАЛИТИКА</div><h2>Динамика нагрузки</h2><p class="panel-description">Отслеживай изменения веса тела и рабочих весов по датам.</p></div><span class="panel-mark">02</span></div>
     <div class="progress-chart-grid">
       <article class="progress-chart-card">
         <div class="progress-chart-heading"><div><h3>Вес тела</h3><p>Измерения по датам</p></div><strong>${weightHistory.length ? `${fmt(weightHistory.at(-1).weightKg)} кг` : '—'}</strong></div>
@@ -146,4 +147,32 @@ export function initProgress(root, onChanged) {
     const output = root.querySelector('#load-progress-chart');
     if (output) output.innerHTML = renderExerciseLoadChart(event.target.value);
   });
+}
+
+
+// Dedicated progress screen. Profile data stays in the profile view; charts and
+// dated weight measurements live here as an independent navigation destination.
+let progressPageRoot = null;
+
+export function renderProgressPage() {
+  if (!progressPageRoot) return;
+  progressPageRoot.innerHTML = `
+    <div class="progress-page-intro">
+      <div class="section-eyebrow">ЛИЧНЫЕ РЕЗУЛЬТАТЫ</div>
+      <h1 class="profile-title">Прогресс</h1>
+      <p class="profile-subtitle">Записывай личные рекорды и отслеживай, как меняются твои рабочие веса.</p>
+    </div>
+    ${renderAchievementsSection()}
+    ${renderProgressSection()}
+  `;
+}
+
+export function initProgressPage() {
+  progressPageRoot = document.getElementById('progress-content');
+  if (!progressPageRoot || progressPageRoot.dataset.pageInitialized === 'true') return;
+  progressPageRoot.dataset.pageInitialized = 'true';
+  const rerender = () => renderProgressPage();
+  initProgress(progressPageRoot, rerender);
+  initAchievements(progressPageRoot, rerender);
+  renderProgressPage();
 }

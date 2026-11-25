@@ -10,6 +10,13 @@ import { renderSetLogger } from './set-log.js';
 let activeSession = null; // { workoutId, started, checked: Set<id> }
 let timerInterval = null;
 
+// Expose the active workout context to the exercise catalogue so extra movements
+// can be logged without modifying the prescribed workout plan.
+export function getActiveSessionContext() {
+  if (!activeSession) return null;
+  return { sessionId: activeSession.sessionId, workoutId: activeSession.workoutId };
+}
+
 export function loadSession() {
   activeSession = readJSON('gym_session', null);
   if (activeSession && activeSession.checked) {

@@ -1,12 +1,8 @@
 import { readJSON, writeJSON } from '../core/storage.js';
 import { calculateBodyMetrics } from '../core/metrics.js';
 import { addBodyWeightEntry, localTodayISO } from '../core/training-log.js';
-import { initProgress, renderProgressSection } from './progress.js';
 
 const PROFILE_KEY = 'gym_profile_v1';
-const RECORDS_KEY = 'gym_achievements_v1';
-let editingRecordId = null;
-let isRecordFormOpen = false;
 let root = null;
 
 const todayISO = () => { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); return now.toISOString().slice(0, 10); };
@@ -19,11 +15,6 @@ const safeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({
 function loadProfile() {
   const value = readJSON(PROFILE_KEY, {});
   return value && typeof value === 'object' ? value : {};
-}
-
-function loadRecords() {
-  const value = readJSON(RECORDS_KEY, []);
-  return Array.isArray(value) ? value : [];
 }
 
 function showMessage(message) {
@@ -78,83 +69,13 @@ function renderMetricCard(profile) {
   </div>`;
 }
 
-function renderRecordForm(record = null) {
-  if (!isRecordFormOpen) return '';
-  const isEditing = Boolean(record);
-  return `<form class="record-form" id="achievement-form">
-    <div class="record-form-heading">${isEditing ? 'Изменить достижение' : 'Новое достижение'}</div>
-    <label class="field-label" for="record-exercise">Тренажёр или упражнение</label>
-    <input class="profile-input" id="record-exercise" name="exercise" maxlength="90" required placeholder="Например, жим лёжа" value="${safeText(record?.exercise || '')}">
-    <div class="form-grid-two">
-      <div>
-        <label class="field-label" for="record-weight">Максимальный вес, кг</label>
-        <input class="profile-input" id="record-weight" name="weight" type="number" min="0.1" max="1000" step="0.1" required placeholder="80" value="${record ? safeText(record.weight) : ''}">
-      </div>
-      <div>
-        <label class="field-label" for="record-reps">Повторения</label>
-        <input class="profile-input" id="record-reps" name="reps" type="number" min="1" max="1000" step="1" placeholder="8" value="${record?.reps ? safeText(record.reps) : ''}">
-      </div>
-    </div>
-    <label class="field-label" for="record-date">Дата результата</label>
-    <input class="profile-input" id="record-date" name="date" type="date" required value="${safeText(record?.date || todayISO())}">
-    <label class="field-label" for="record-note">Комментарий <span class="field-optional">необязательно</span></label>
-    <textarea class="profile-input profile-textarea" id="record-note" name="note" maxlength="240" rows="2" placeholder="Например, новый личный рекорд">${safeText(record?.note || '')}</textarea>
-    <div class="record-form-actions">
-      <button class="btn btn-accent" type="submit">${isEditing ? 'Сохранить изменения' : 'Сохранить достижение'}</button>
-      <button class="btn btn-outline" type="button" data-action="cancel-record">Отмена</button>
-    </div>
-  </form>`;
-}
-
-function renderRecords(records) {
-  if (!records.length) {
-    return `<div class="achievement-empty">
-      <div class="achievement-empty-mark">PR</div>
-      <strong>Пока нет личных рекордов</strong>
-      <span>Добавьте упражнение и вес, с которым вы выполнили лучший подход.</span>
-    </div>`;
-  }
-
-  const bestByExercise = new Map();
-  for (const record of records) {
-    const key = String(record.exercise || '').trim().toLocaleLowerCase('ru');
-    bestByExercise.set(key, Math.max(bestByExercise.get(key) || 0, Number(record.weight) || 0));
-  }
-
-  return `<div class="achievement-list">${records
-    .slice()
-    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-    .map(record => {
-      const key = String(record.exercise || '').trim().toLocaleLowerCase('ru');
-      const isBest = Number(record.weight) >= bestByExercise.get(key);
-      const date = record.date ? new Date(`${record.date}T00:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Без даты';
-      return `<article class="achievement-card">
-        <div class="achievement-icon">${safeText(String(record.exercise || 'PR').trim().slice(0, 2).toUpperCase())}</div>
-        <div class="achievement-main">
-          <div class="achievement-title-row"><strong>${safeText(record.exercise)}</strong>${isBest ? '<span class="record-best">ЛУЧШИЙ</span>' : ''}</div>
-          <div class="achievement-meta">${date}${record.reps ? ` · ${safeText(record.reps)} повт.` : ''}</div>
-          ${record.note ? `<div class="achievement-note">${safeText(record.note)}</div>` : ''}
-        </div>
-        <div class="achievement-result"><strong>${kg(record.weight)}</strong><div>вес</div></div>
-        <div class="achievement-actions">
-          <button class="icon-action" type="button" data-action="edit-record" data-id="${safeText(record.id)}" aria-label="Изменить достижение" title="Изменить">✎</button>
-          <button class="icon-action danger" type="button" data-action="delete-record" data-id="${safeText(record.id)}" aria-label="Удалить достижение" title="Удалить">×</button>
-        </div>
-      </article>`;
-    }).join('')}
-  </div>`;
-}
-
 export function renderProfile() {
   if (!root) return;
   const profile = loadProfile();
-  const records = loadRecords();
-  const currentEdit = editingRecordId ? records.find(item => item.id === editingRecordId) : null;
-  const form = renderRecordForm(currentEdit);
   const initials = profile.name ? safeText(profile.name.trim().slice(0, 1).toUpperCase()) : 'G';
 
   root.innerHTML = `<div class="profile-heading">
-      <div><div class="section-eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="profile-title">Профиль</h1><p class="profile-subtitle">Показатели тела и личные рекорды в одном месте.</p></div>
+      <div><div class="section-eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1 class="profile-title">Профиль</h1><p class="profile-subtitle">Личные параметры тела и расчёт ИМТ.</p></div>
       <div class="profile-avatar">${initials}</div>
     </div>
     <div class="profile-grid">
@@ -177,18 +98,8 @@ export function renderProfile() {
         <div id="bmi-output">${renderMetricCard(profile)}</div>
       </section>
     </div>
-    ${renderProgressSection()}
-    <section class="profile-panel achievements-panel">
-      <div class="achievements-header">
-        <div class="panel-heading"><div><div class="panel-eyebrow">ПРОГРЕСС В ЗАЛЕ</div><h2>Достижения</h2><p class="panel-description">История максимальных весов по упражнениям и тренажёрам.</p></div><span class="panel-mark">03</span></div>
-        <button class="btn btn-accent add-record-btn" type="button" data-action="add-record"><span aria-hidden="true">＋</span> Добавить рекорд</button>
-      </div>
-      ${form}
-      <div id="achievement-list">${renderRecords(records)}</div>
-    </section>
-    <p class="profile-privacy-note"><span>i</span> Профиль и достижения хранятся только в этом браузере. При очистке данных сайта или смене устройства записи не синхронизируются автоматически.</p>`;
+    <p class="profile-privacy-note"><span>i</span> Личные параметры хранятся только в этом браузере. История силовых рекордов находится отдельно — во вкладке «Прогресс».</p>`;
 }
-
 function updateBmiPreview() {
   const values = profileValues();
   if (!values) return;
@@ -232,89 +143,13 @@ function saveProfile(event) {
   }
 }
 
-function saveRecord(event) {
-  event.preventDefault();
-  const data = new FormData(event.target);
-  const exercise = String(data.get('exercise') || '').trim();
-  const weight = number(data.get('weight'));
-  const repsRaw = String(data.get('reps') || '').trim();
-  const reps = repsRaw ? Number.parseInt(repsRaw, 10) : null;
-  const date = String(data.get('date') || '');
-  const note = String(data.get('note') || '').trim();
-
-  if (!exercise || exercise.length > 90) return showMessage('Укажите упражнение или тренажёр');
-  if (!Number.isFinite(weight) || weight <= 0 || weight > 1000) return showMessage('Укажите корректный вес от 0,1 до 1000 кг');
-  if (reps !== null && (!Number.isInteger(reps) || reps < 1 || reps > 1000)) return showMessage('Количество повторений должно быть от 1 до 1000');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return showMessage('Укажите дату достижения');
-
-  const records = loadRecords();
-  const existing = editingRecordId ? records.find(item => item.id === editingRecordId) : null;
-  const key = exercise.toLocaleLowerCase('ru');
-  const previousBest = records
-    .filter(item => item.id !== editingRecordId && String(item.exercise).trim().toLocaleLowerCase('ru') === key)
-    .reduce((max, item) => Math.max(max, Number(item.weight) || 0), 0);
-  const record = {
-    id: existing?.id || (globalThis.crypto?.randomUUID?.() || `record-${Date.now()}`),
-    exercise,
-    weight,
-    reps,
-    date,
-    note,
-    createdAt: existing?.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  const next = existing ? records.map(item => item.id === editingRecordId ? record : item) : [...records, record];
-  if (writeJSON(RECORDS_KEY, next)) {
-    editingRecordId = null;
-    isRecordFormOpen = false;
-    renderProfile();
-    showMessage(weight > previousBest ? 'Новый личный рекорд сохранён!' : 'Достижение сохранено');
-  } else {
-    showMessage('Не удалось сохранить достижение');
-  }
-}
-
-function handleClick(event) {
-  const button = event.target.closest('[data-action]');
-  if (!button) return;
-  const action = button.dataset.action;
-  const id = button.dataset.id;
-
-  if (action === 'add-record') {
-    editingRecordId = null;
-    isRecordFormOpen = true;
-    renderProfile();
-    root.querySelector('#record-exercise')?.focus();
-  } else if (action === 'cancel-record') {
-    editingRecordId = null;
-    isRecordFormOpen = false;
-    renderProfile();
-  } else if (action === 'edit-record') {
-    editingRecordId = id;
-    isRecordFormOpen = true;
-    renderProfile();
-    root.querySelector('#record-exercise')?.focus();
-  } else if (action === 'delete-record') {
-    const record = loadRecords().find(item => item.id === id);
-    if (!record || !window.confirm(`Удалить достижение «${record.exercise}»?`)) return;
-    const next = loadRecords().filter(item => item.id !== id);
-    if (writeJSON(RECORDS_KEY, next)) {
-      renderProfile();
-      showMessage('Достижение удалено');
-    }
-  }
-}
-
 export function initProfile() {
   root = document.getElementById('profile-content');
   if (!root || root.dataset.initialized === 'true') return;
   root.dataset.initialized = 'true';
-  initProgress(root, () => renderProfile());
   root.addEventListener('submit', event => {
     if (event.target.id === 'profile-form') saveProfile(event);
-    if (event.target.id === 'achievement-form') saveRecord(event);
   });
-  root.addEventListener('click', handleClick);
   root.addEventListener('input', event => {
     if (['profile-weight', 'profile-height', 'profile-age', 'profile-goal'].includes(event.target.id)) updateBmiPreview();
   });
