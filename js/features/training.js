@@ -10,6 +10,56 @@ import { renderSetLogger } from './set-log.js';
 let activeSession = null; // { workoutId, started, checked: Set<id> }
 let timerInterval = null;
 
+const WORKOUT_PLAN_KEY = 'gym_workout_plan_v1';
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+function loadWorkoutPlan() {
+  const saved = readJSON(WORKOUT_PLAN_KEY, null);
+  if (!saved || typeof saved !== 'object') return;
+
+  Object.entries(WORKOUT_DATA).forEach(([workoutId, workout]) => {
+    const exercises = saved[workoutId];
+    if (!Array.isArray(exercises)) return;
+    workout.exercises = exercises
+      .filter(ex => ex && typeof ex.id === 'string' && typeof ex.name === 'string')
+      .map(ex => ({
+        id: ex.id,
+        name: ex.name,
+        sets: String(ex.sets || ''),
+        primary: Array.isArray(ex.primary) ? ex.primary.map(String) : [],
+        secondary: Array.isArray(ex.secondary) ? ex.secondary.map(String) : [],
+        note: String(ex.note || '')
+      }));
+  });
+}
+
+function saveWorkoutPlan() {
+  const snapshot = Object.fromEntries(Object.entries(WORKOUT_DATA).map(([workoutId, workout]) => [
+    workoutId,
+    workout.exercises.map(ex => ({
+      id: ex.id,
+      name: ex.name,
+      sets: ex.sets,
+      primary: Array.isArray(ex.primary) ? ex.primary : [],
+      secondary: Array.isArray(ex.secondary) ? ex.secondary : [],
+      note: ex.note || ''
+    }))
+  ]));
+  writeJSON(WORKOUT_PLAN_KEY, snapshot);
+}
+
+function reconcileActiveSession(workoutId) {
+  if (!activeSession || activeSession.workoutId !== workoutId) return;
+  const validIds = new Set(WORKOUT_DATA[workoutId].exercises.map(ex => ex.id));
+  activeSession.checked = new Set([...activeSession.checked].filter(id => validIds.has(id)));
+  saveSession();
+}
+
 // Expose the active workout context to the exercise catalogue so extra movements
 // can be logged without modifying the prescribed workout plan.
 export function getActiveSessionContext() {
@@ -18,6 +68,7 @@ export function getActiveSessionContext() {
 }
 
 export function loadSession() {
+  loadWorkoutPlan();
   activeSession = readJSON('gym_session', null);
   if (activeSession && activeSession.checked) {
     activeSession.checked = new Set(activeSession.checked);
@@ -154,8 +205,8 @@ function exerciseCard(ex, isDone, interactive, sessionId = '', workoutId = '') {
   const expandId = `detail-${ex.id}`;
   const chevId = `chev-${ex.id}`;
 
-  const primPills = ex.primary.map(p => `<span class="muscle-tag primary">${p}</span>`).join('');
-  const secPills = ex.secondary.map(p => `<span class="muscle-tag">${p}</span>`).join('');
+  const primPills = (ex.primary || []).map(p => `<span class="muscle-tag primary">${escapeHTML(p)}</span>`).join('');
+  const secPills = (ex.secondary || []).map(p => `<span class="muscle-tag">${escapeHTML(p)}</span>`).join('');
 
   return `
     <div class="ex-card ${doneClass}" id="card-${ex.id}">
@@ -165,15 +216,15 @@ function exerciseCard(ex, isDone, interactive, sessionId = '', workoutId = '') {
           <svg viewBox="0 0 14 14" fill="none" stroke="currentColor"><polyline points="2,7 5.5,11 12,3"/></svg>
         </div>` : `<div style="width:22px;height:22px;flex-shrink:0;border:1.5px solid var(--border);border-radius:6px;"></div>`}
         <div class="ex-info">
-          <div class="ex-name">${ex.name}</div>
-          <div class="ex-sets">${ex.sets}</div>
+          <div class="ex-name">${escapeHTML(ex.name)}</div>
+          <div class="ex-sets">${escapeHTML(ex.sets)}</div>
           <div class="ex-muscles">${primPills}${secPills}</div>
         </div>
         <div class="ex-expand-btn" id="${chevId}" onclick="event.stopPropagation(); toggleDetail('${expandId}','${chevId}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
         </div>
       </div>
-      <div class="ex-detail" id="${expandId}">${ex.note}</div>
+      <div class="ex-detail" id="${expandId}">${escapeHTML(ex.note)}</div>
       ${interactive ? renderSetLogger(ex, sessionId, workoutId) : ''}
     </div>
   `;
@@ -327,7 +378,7 @@ function confirmFinish() {
   saveSession();
   stopTimer();
   closeModal();
-  window.switchView('history');
+  window.switchView('schedule');
   showToast('✅ Тренировка сохранена!');
 }
 
@@ -338,50 +389,122 @@ function confirmFinish() {
 export function renderSchedule() {
   const c = document.getElementById('schedule-content');
   const dow = new Date().getDay();
-
   const days = [
-    { label: 'Понедельник', wid: 'mon',  today: dow === 1, optional: false },
-    { label: 'Вторник',     wid: 'tue',  today: dow === 2, optional: false },
-    { label: 'Среда',       wid: 'wed',  today: dow === 3, optional: false },
-    { label: 'Четверг',     wid: 'thu',  today: dow === 4, optional: false },
-    { label: 'Пятница',     wid: 'fri',  today: dow === 5, optional: false },
-    { label: 'Выходной',    wid: 'wknd', today: dow === 0 || dow === 6, optional: true },
+    { label: 'Понедельник', wid: 'mon', today: dow === 1, optional: false },
+    { label: 'Вторник', wid: 'tue', today: dow === 2, optional: false },
+    { label: 'Среда', wid: 'wed', today: dow === 3, optional: false },
+    { label: 'Четверг', wid: 'thu', today: dow === 4, optional: false },
+    { label: 'Пятница', wid: 'fri', today: dow === 5, optional: false },
+    { label: 'Выходной', wid: 'wknd', today: dow === 0 || dow === 6, optional: true }
   ];
 
-  c.innerHTML = `<div class="section-title">Программа тренировок</div>
-    ${days.map(d => {
-      const w = WORKOUT_DATA[d.wid];
-      const exRows = w.exercises.map(ex => `
-        <div class="sched-ex">
-          <span class="sched-ex-name">${ex.name}</span>
-          <span class="sched-ex-sets">${ex.sets.split(' ')[0]}</span>
+  c.innerHTML = '<div class="section-title">Программа тренировок</div>' + days.map(d => {
+    const w = WORKOUT_DATA[d.wid];
+    const exRows = w.exercises.map(ex => {
+      const editAction = "openScheduleExerciseEditor('" + d.wid + "','" + ex.id + "')";
+      const removeAction = "removeScheduleExercise('" + d.wid + "','" + ex.id + "')";
+      return '<div class="sched-ex">' +
+        '<span class="sched-ex-name">' + escapeHTML(ex.name) + '</span>' +
+        '<span class="sched-ex-sets">' + escapeHTML((ex.sets || '').split(' ')[0]) + '</span>' +
+        '<div class="schedule-ex-actions">' +
+          '<button class="btn-sm" type="button" onclick="' + editAction + '">Изменить</button>' +
+          '<button class="btn-sm schedule-delete-btn" type="button" onclick="' + removeAction + '">Удалить</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
 
-        </div>`).join('');
-      return `
-        <div class="schedule-card">
-          <div class="schedule-header" onclick="toggleSchedule('sc-${d.wid}', this)">
-            <div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-                <span class="weekday-tag ${d.today ? 'today' : ''}">${d.today ? '📍 ' : ''}${d.label}</span>
-                ${d.optional ? '<span style="font-size:10px;color:var(--text3);font-weight:500">по настроению</span>' : ''}
-              </div>
-              <div class="schedule-day"><span class="day-pill ${w.pillClass}">${w.type}</span></div>
-              <div class="schedule-type">${w.label} · ${w.exercises.length} упр</div>
-            </div>
-            <div class="schedule-chevron">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
-            </div>
-          </div>
-          <div class="schedule-body" id="sc-${d.wid}">
-            ${exRows}
-            <div class="start-from-schedule">
-              <button class="btn-sm" onclick="startSession('${d.wid}')">▶ Начать эту тренировку ↗</button>
-            </div>
-          </div>
-        </div>`;
-    }).join('')}`;
+    const headerAction = "toggleSchedule('sc-" + d.wid + "', this)";
+    return '<div class="schedule-card">' +
+      '<div class="schedule-header" onclick="' + headerAction + '">' +
+        '<div>' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
+            '<span class="weekday-tag ' + (d.today ? 'today' : '') + '">' + (d.today ? '📍 ' : '') + d.label + '</span>' +
+            (d.optional ? '<span style="font-size:10px;color:var(--text3);font-weight:500">по настроению</span>' : '') +
+          '</div>' +
+          '<div class="schedule-day"><span class="day-pill ' + escapeHTML(w.pillClass) + '">' + escapeHTML(w.type) + '</span></div>' +
+          '<div class="schedule-type">' + escapeHTML(w.label) + ' · ' + w.exercises.length + ' упр</div>' +
+        '</div>' +
+        '<div class="schedule-chevron"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></div>' +
+      '</div>' +
+      '<div class="schedule-body" id="sc-' + d.wid + '">' +
+        (exRows || '<div class="schedule-empty">Пока нет упражнений. Добавь первое упражнение в этот день.</div>') +
+        '<button class="btn btn-outline schedule-add-exercise" type="button" onclick="openScheduleExerciseEditor(\'' + d.wid + '\')">+ Добавить упражнение</button>' +
+        '<div class="start-from-schedule"><button class="btn-sm" type="button" onclick="startSession(\'' + d.wid + '\')">▶ Начать эту тренировку ↗</button></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  renderHistory();
 }
 
+function openScheduleExerciseEditor(workoutId, exerciseId = '') {
+  const workout = WORKOUT_DATA[workoutId];
+  if (!workout) return;
+  const exercise = exerciseId ? workout.exercises.find(item => item.id === exerciseId) : null;
+  document.getElementById('schedule-editor-day').value = workoutId;
+  document.getElementById('schedule-editor-id').value = exercise ? exercise.id : '';
+  document.getElementById('schedule-editor-name').value = exercise ? exercise.name : '';
+  document.getElementById('schedule-editor-sets').value = exercise ? exercise.sets : '3 × 10–12 повт';
+  document.getElementById('schedule-editor-primary').value = exercise ? (exercise.primary || []).join(', ') : '';
+  document.getElementById('schedule-editor-secondary').value = exercise ? (exercise.secondary || []).join(', ') : '';
+  document.getElementById('schedule-editor-note').value = exercise ? (exercise.note || '') : '';
+  document.getElementById('schedule-editor-title').textContent = exercise ? 'Изменить упражнение' : 'Добавить упражнение';
+  document.getElementById('schedule-editor-modal').classList.add('open');
+  document.getElementById('schedule-editor-name').focus();
+}
+
+function closeScheduleExerciseEditor() {
+  document.getElementById('schedule-editor-modal').classList.remove('open');
+}
+
+function saveScheduleExercise(event) {
+  event.preventDefault();
+  const workoutId = document.getElementById('schedule-editor-day').value;
+  const exerciseId = document.getElementById('schedule-editor-id').value;
+  const workout = WORKOUT_DATA[workoutId];
+  if (!workout) return;
+
+  const name = document.getElementById('schedule-editor-name').value.trim();
+  const sets = document.getElementById('schedule-editor-sets').value.trim();
+  if (!name || !sets) {
+    showToast('Заполни название и план подходов');
+    return;
+  }
+
+  const parseMuscles = value => value.split(',').map(item => item.trim()).filter(Boolean);
+  const updated = {
+    id: exerciseId || ('custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
+    name,
+    sets,
+    primary: parseMuscles(document.getElementById('schedule-editor-primary').value),
+    secondary: parseMuscles(document.getElementById('schedule-editor-secondary').value),
+    note: document.getElementById('schedule-editor-note').value.trim()
+  };
+
+  const index = exerciseId ? workout.exercises.findIndex(item => item.id === exerciseId) : -1;
+  if (index >= 0) workout.exercises[index] = { ...workout.exercises[index], ...updated };
+  else workout.exercises.push(updated);
+
+  saveWorkoutPlan();
+  reconcileActiveSession(workoutId);
+  closeScheduleExerciseEditor();
+  renderSchedule();
+  renderToday();
+  showToast(exerciseId ? 'Упражнение обновлено' : 'Упражнение добавлено в расписание');
+}
+
+function removeScheduleExercise(workoutId, exerciseId) {
+  const workout = WORKOUT_DATA[workoutId];
+  if (!workout) return;
+  const exercise = workout.exercises.find(item => item.id === exerciseId);
+  if (!exercise || !confirm('Удалить упражнение «' + exercise.name + '» из расписания?')) return;
+  workout.exercises = workout.exercises.filter(item => item.id !== exerciseId);
+  saveWorkoutPlan();
+  reconcileActiveSession(workoutId);
+  renderSchedule();
+  renderToday();
+  showToast('Упражнение удалено из расписания');
+}
 function toggleSchedule(id, header) {
   const body = document.getElementById(id);
   const chev = header.querySelector('.schedule-chevron');
@@ -476,5 +599,6 @@ export function showToast(msg) {
 // Inline handlers in the legacy training UI are bridged explicitly from this module.
 Object.assign(window, {
   toggleDetail, toggleExercise, startSession, cancelSession, openFinishModal,
-  closeModal, confirmFinish, toggleSchedule, confirmClear
+  closeModal, confirmFinish, toggleSchedule, confirmClear,
+  openScheduleExerciseEditor, closeScheduleExerciseEditor, saveScheduleExercise, removeScheduleExercise
 });
