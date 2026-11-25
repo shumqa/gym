@@ -2,10 +2,11 @@ import { loadSession, renderToday, renderSchedule, renderHistory, showToast } fr
 import { initProfile, renderProfile } from './features/profile.js';
 import { initSetLog } from './features/set-log.js';
 import { initCatalog, renderCatalog } from './features/catalog.js';
+import { initProgressPage, renderProgressPage } from './features/progress.js';
 import { initTheme, toggleTheme } from './features/theme.js';
 import './features/clock.js';
 
-const VIEWS = new Set(['today', 'schedule', 'history', 'catalog', 'timer', 'profile']);
+const VIEWS = new Set(['today', 'schedule', 'history', 'catalog', 'progress', 'timer', 'profile']);
 let currentView = 'today';
 
 export function switchView(view) {
@@ -23,11 +24,17 @@ export function switchView(view) {
     element.classList.toggle('active', active);
     element.setAttribute('aria-current', active ? 'page' : 'false');
   });
+  const profileShortcut = document.querySelector('.profile-shortcut');
+  if (profileShortcut) {
+    profileShortcut.classList.toggle('active', view === 'profile');
+    profileShortcut.setAttribute('aria-current', view === 'profile' ? 'page' : 'false');
+  }
 
   if (view === 'today') renderToday();
   if (view === 'schedule') renderSchedule();
   if (view === 'history') renderHistory();
   if (view === 'catalog') renderCatalog();
+  if (view === 'progress') renderProgressPage();
   if (view === 'profile') renderProfile();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -49,6 +56,7 @@ function initApp() {
   initProfile();
   initSetLog(document.getElementById('today-content'));
   initCatalog();
+  initProgressPage();
   updateHeaderDate();
   renderToday();
   if (document.getElementById('view-today')) {
