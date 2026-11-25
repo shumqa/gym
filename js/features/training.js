@@ -114,7 +114,7 @@ export function renderToday() {
     if (!w) { activeSession = null; saveSession(); return renderToday(); }
     const total = w.exercises.length;
     const done = activeSession.checked.size;
-    const pct = Math.round(done / total * 100);
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
 
     let exHtml = w.exercises.map(ex => {
       const isDone = activeSession.checked.has(ex.id);
@@ -250,7 +250,7 @@ function toggleExercise(exId) {
   const w = WORKOUT_DATA[activeSession.workoutId];
   const total = w.exercises.length;
   const done = activeSession.checked.size;
-  const pct = Math.round(done / total * 100);
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
 
   if (card) {
     card.classList.toggle('done', activeSession.checked.has(exId));
@@ -337,7 +337,7 @@ function openFinishModal() {
   const total = w.exercises.length;
   const done = activeSession.checked.size;
   const elapsed = formatTimer(Date.now() - activeSession.started);
-  const pct = Math.round(done / total * 100);
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
 
   document.getElementById('finish-modal-stats').innerHTML = `
     <div class="finish-stat"><div class="finish-stat-val">${done}/${total}</div><div class="finish-stat-lbl">Упражнений</div></div>
@@ -523,7 +523,7 @@ export function renderHistory() {
 
   const totalWorkouts = hist.length;
   const totalExercises = hist.reduce((s, h) => s + h.doneCount, 0);
-  const fullCompletes = hist.filter(h => h.doneCount === h.totalCount).length;
+  const fullCompletes = hist.filter(h => h.totalCount > 0 && h.doneCount === h.totalCount).length;
 
   if (hist.length === 0) {
     c.innerHTML = `
@@ -543,7 +543,7 @@ export function renderHistory() {
   const histItems = hist.map(h => {
     const d = new Date(h.date);
     const dateStr = `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const pct = Math.round(h.doneCount / h.totalCount * 100);
+    const pct = h.totalCount > 0 ? Math.round(h.doneCount / h.totalCount * 100) : 0;
     const pctClass = pct === 100 ? 'full' : 'partial';
     const elapsed = h.elapsedMs ? formatTimer(h.elapsedMs) : '—';
     return `
