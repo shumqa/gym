@@ -22,9 +22,10 @@ body { width:100%; max-width:none; min-height:100vh; padding-bottom:92px; user-s
 #view-schedule #schedule-content { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 #view-schedule #schedule-content > .section-title { grid-column:1/-1; margin-bottom:2px; }
 #view-schedule .schedule-card { margin:0; }
-#view-history .stats-row { gap:12px; }
-#view-history .stat-card { padding:16px; }
-#view-history .hist-item { margin-bottom:9px; }
+#history-content { margin-top:24px; }
+#history-content .stats-row { gap:12px; }
+#history-content .stat-card { padding:16px; }
+#history-content .hist-item { margin-bottom:9px; }
 .btn { border-radius:10px; }
 .btn:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 @media (max-width:760px) {
@@ -176,4 +177,28 @@ body::after {
 [data-theme="light"] .progress-page-intro { border-color:rgba(74,124,0,.18); background:linear-gradient(120deg, rgba(74,124,0,.09), rgba(74,124,0,.025) 48%, var(--surface)); }
 @media (prefers-reduced-motion: reduce) {
   .btn-accent, .btn-accent::after, .btn-outline, .profile-shortcut, .nav-btn { transition:none !important; }
+}
+
+
+/* Editable weekly workout plan and history embedded below the schedule. */
+.schedule-ex-actions { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.schedule-ex-actions .btn-sm { padding:6px 9px; font-size:11px; }
+.schedule-delete-btn { color:var(--danger); border-color:rgba(255,77,77,.22); }
+.schedule-delete-btn:hover { color:var(--danger); border-color:var(--danger); }
+.schedule-add-exercise { margin-top:12px; padding:11px 14px; font-family:'DM Sans',sans-serif; font-size:13px; letter-spacing:0; }
+.schedule-empty { padding:18px 4px; color:var(--text3); font-size:13px; }
+.schedule-history { width:100%; }
+.schedule-editor-modal { max-width:520px; }
+.schedule-field { display:flex; flex-direction:column; gap:7px; margin-bottom:13px; color:var(--text2); font-size:12px; font-weight:500; }
+.schedule-field input, .schedule-field textarea {
+  width:100%; padding:12px 13px; border:1px solid var(--border); border-radius:9px;
+  background:var(--surface2); color:var(--text); font:14px 'DM Sans',sans-serif;
+}
+.schedule-field textarea { resize:vertical; min-height:76px; }
+.schedule-field input::placeholder, .schedule-field textarea::placeholder { color:var(--text3); }
+@media (max-width:760px) {
+  .sched-ex { align-items:flex-start; flex-wrap:wrap; }
+  .sched-ex-name { flex:1 1 calc(100% - 52px); }
+  .schedule-ex-actions { width:100%; margin-left:0; justify-content:flex-end; }
+  .schedule-editor-modal { padding-bottom:28px; }
 }
